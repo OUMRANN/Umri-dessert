@@ -598,6 +598,10 @@ section{ position:relative; z-index:2; }
   background:radial-gradient(circle, var(--sage-glow), transparent 70%);
   pointer-events:none;
 }
+@media (max-width:768px){
+  .order-panel{ overflow:hidden; }
+  .order-panel::before{ display:none; }
+}
 
 .order-grid{
   display:grid; gap:40px;
@@ -677,25 +681,6 @@ section{ position:relative; z-index:2; }
   display:flex; align-items:center; gap:20px; margin-top:36px; flex-wrap:wrap;
 }
 .form-note{ font-size:12.5px; color:var(--muted); max-width:260px; }
-
-/* success state */
-.success-panel{
-  display:none;
-  text-align:center;
-  padding:40px 20px;
-}
-.success-panel.show{ display:block; animation:riseIn .6s var(--ease) forwards; }
-.success-icon{
-  width:64px; height:64px; margin:0 auto 24px;
-  border-radius:50%;
-  border:1px solid var(--gold);
-  display:flex; align-items:center; justify-content:center;
-  color:var(--gold-bright); font-size:26px;
-  box-shadow:0 0 30px var(--gold-glow);
-}
-.success-panel h3{ font-family:var(--serif); font-size:26px; margin-bottom:10px; }
-.success-panel p{ color:var(--cream-dim); font-weight:300; }
-.order-form.hide{ display:none; }
 
 /* ============================================================
    FOOTER
@@ -947,16 +932,9 @@ footer{
 
             <div class="submit-row">
               <button type="submit" class="btn btn-gold gold-glow-target">Send Inquiry</button>
-              <span class="form-note">We reply personally within a few hours to confirm your order.</span>
+              <span class="form-note">You'll be redirected to WhatsApp to send us your order directly.</span>
             </div>
           </form>
-
-          <div class="success-panel" id="successPanel">
-            <div class="success-icon">✓</div>
-            <h3>Inquiry received</h3>
-            <p>Thank you — we're reviewing your request and will confirm your order shortly.</p>
-            <button class="btn btn-ghost" style="margin-top:28px;" id="newInquiryBtn">Send Another Inquiry</button>
-          </div>
         </div>
       </div>
     </div>
@@ -1160,44 +1138,20 @@ document.getElementById('qtyPlus').addEventListener('click', () => {
 });
 
 /* ================================================================
-   INQUIRY FORM SUBMISSION
+   INQUIRY FORM SUBMISSION — direct WhatsApp handoff
    ------------------------------------------------------------
-   sendOrder() is the single hook point for wiring this up to a
-   real backend. Umri's other sites use a Telegram bot — to match
-   that pattern, replace the body of sendOrder() with a fetch()
-   call to:
-     https://api.telegram.org/bot<YOUR_BOT_TOKEN>/sendMessage
-   passing { chat_id: <YOUR_CHAT_ID>, text: <formatted order> }.
-   Everything above this function only builds the orderData object
-   and does not need to change.
-   ================================================================ */
-function sendOrder(orderData) {
-  // ---- BACKEND HOOK ----
-  // Example (uncomment and fill in to go live with Telegram):
-  //
-  // const BOT_TOKEN = "YOUR_BOT_TOKEN";
-  // const CHAT_ID = "YOUR_CHAT_ID";
-  // const text =
-  //   `🍰 NEW ORDER — Umri Dessert\n\n` +
-  //   `👤 Name: ${orderData.name}\n` +
-  //   `📞 Phone: ${orderData.phone}\n` +
-  //   `🍮 Item: ${orderData.dessert} × ${orderData.quantity}\n` +
-  //   `🚚 Fulfilment: ${orderData.fulfil}\n` +
-  //   `📅 Date: ${orderData.date}\n` +
-  //   `📝 Notes: ${orderData.notes || "—"}`;
-  //
-  // return fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-  //   method: "POST",
-  //   headers: { "Content-Type": "application/json" },
-  //   body: JSON.stringify({ chat_id: CHAT_ID, text })
-  // });
+   On submit, the order details are formatted into a plain-text
+   message and the browser is redirected straight to WhatsApp
+   with that message pre-filled, via window.location.href.
+   There is no internal "success" UI state — the redirect away
+   from the page IS the confirmation.
 
-  console.log("Order ready to send:", orderData);
-  return Promise.resolve();
-}
+   WHATSAPP_NUMBER must be in full international format with no
+   spaces, dashes, or a leading "+" (e.g. "251900000000").
+   ================================================================ */
+const WHATSAPP_NUMBER = "251900000000";
 
 const orderForm = document.getElementById('orderForm');
-const successPanel = document.getElementById('successPanel');
 
 orderForm.addEventListener('submit', (e) => {
   e.preventDefault();
@@ -1214,18 +1168,18 @@ orderForm.addEventListener('submit', (e) => {
 
   if (!orderData.name || !orderData.phone || !orderData.date) return;
 
-  sendOrder(orderData).then(() => {
-    orderForm.classList.add('hide');
-    successPanel.classList.add('show');
-  });
-});
+  const message =
+    `🍰 NEW ORDER — Umri Dessert\n\n` +
+    `👤 Name: ${orderData.name}\n` +
+    `📞 Phone: ${orderData.phone}\n` +
+    `🍮 Item: ${orderData.dessert} × ${orderData.quantity}\n` +
+    `🚚 Fulfilment: ${orderData.fulfil}\n` +
+    `📅 Date: ${orderData.date}\n` +
+    `📝 Notes: ${orderData.notes || "—"}`;
 
-document.getElementById('newInquiryBtn').addEventListener('click', () => {
-  orderForm.reset();
-  qty = 1;
-  qtyVal.textContent = 1;
-  successPanel.classList.remove('show');
-  orderForm.classList.remove('hide');
+  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+
+  window.location.href = whatsappUrl;
 });
 
 /* misc */
