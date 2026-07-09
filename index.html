@@ -91,7 +91,17 @@ button{font-family:inherit; cursor:pointer;}
   color:var(--cream);
 }
 
-/* subtle ambient grain, keeps the charcoal from feeling flat/digital */
+@media (max-width: 768px) {
+  .order-panel {
+    overflow: hidden !important;
+  }
+  .order-panel::before {
+    display: none !important;
+  }
+}
+
+     
+     /* subtle ambient grain, keeps the charcoal from feeling flat/digital */
 .grain{
   position:fixed; inset:0; pointer-events:none; z-index:1;
   opacity:0.035; mix-blend-mode:overlay;
@@ -1138,19 +1148,8 @@ document.getElementById('qtyPlus').addEventListener('click', () => {
 });
 
 /* ================================================================
-   INQUIRY FORM SUBMISSION — direct WhatsApp handoff
-   ------------------------------------------------------------
-   On submit, the order details are formatted into a plain-text
-   message and the browser is redirected straight to WhatsApp
-   with that message pre-filled, via window.location.href.
-   There is no internal "success" UI state — the redirect away
-   from the page IS the confirmation.
-
-   WHATSAPP_NUMBER must be in full international format with no
-   spaces, dashes, or a leading "+" (e.g. "251900000000").
+   INQUIRY FORM SUBMISSION — direct Telegram handoff
    ================================================================ */
-const WHATSAPP_NUMBER = "251992232063";
-
 const orderForm = document.getElementById('orderForm');
 
 orderForm.addEventListener('submit', (e) => {
@@ -1159,8 +1158,8 @@ orderForm.addEventListener('submit', (e) => {
   const orderData = {
     name: document.getElementById('fullName').value.trim(),
     phone: document.getElementById('phone').value.trim(),
-    dessert: dessertSelect.value,
-    quantity: qty,
+    dessert: document.getElementById('dessertSelect').value,
+    quantity: document.getElementById('qtyVal').textContent,
     fulfil: document.getElementById('fulfil').value,
     date: document.getElementById('dateNeeded').value,
     notes: document.getElementById('notes').value.trim()
@@ -1177,13 +1176,10 @@ orderForm.addEventListener('submit', (e) => {
     `📅 Date: ${orderData.date}\n` +
     `📝 Notes: ${orderData.notes || "—"}`;
 
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-
-  window.location.href = whatsappUrl;
+  const telegramUrl = `https://t.me/umridessert?text=${encodeURIComponent(message)}`;
+  window.location.href = telegramUrl;
 });
 
-/* misc */
-document.getElementById('year').textContent = new Date().getFullYear();
 </script>
 
 </body>
